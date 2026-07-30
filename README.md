@@ -1,6 +1,16 @@
 # Text-to-SQL Query Agent
 
-A REST API that converts plain English questions into SQL queries using Google Gemini AI, executes them safely on a SQLite database, and returns structured JSON results.
+An AI-powered REST API that converts plain English questions into SQL queries using Groq LLaMA 3, executes them safely on a SQLite database, and returns structured JSON results.
+
+---
+
+## Live Demo
+
+> Start the server and visit: `http://localhost:8000/docs`
+
+**Example:**
+- Input: `"Who are the top 3 highest paid employees?"`
+- Output: Automatically generates and executes the correct SQL → returns JSON results
 
 ---
 
@@ -9,36 +19,73 @@ A REST API that converts plain English questions into SQL queries using Google G
 | Layer | Technology |
 |---|---|
 | API Framework | FastAPI |
-| LLM | Google Gemini 1.5 Flash |
+| AI / LLM | Groq LLaMA 3.1 (llama-3.1-8b-instant) |
 | Database | SQLite |
 | Validation | Custom SQL safety validator |
+| Data Export | CSV via StreamingResponse |
 | Environment | python-dotenv |
+| Language | Python 3.12 |
 
 ---
 
 ## Project Structure
 
-```
 text-to-sql-agent/
-├── main.py               ← FastAPI app, all routes
-├── database.py           ← SQLite connection helper
-├── schema_inspector.py   ← Reads DB schema for LLM prompt
-├── sql_validator.py      ← Blocks unsafe SQL before execution
-├── llm_service.py        ← Gemini API integration
-├── sample_data.py        ← Seeds company.db (run once)
-├── .env                  ← Your API key (never commit this)
-├── .env.example          ← Template — safe to commit
-├── requirements.txt      ← Python dependencies
-└── README.md             ← This file
-```
+├── main.py ← FastAPI app — all 9 endpoints
+├── database.py ← SQLite connection helper
+├── schema_inspector.py ← Reads DB schema dynamically for LLM prompt
+├── sql_validator.py ← Blocks unsafe SQL before execution
+├── llm_service.py ← Groq API integration
+├── sample_data.py ← Seeds company.db with 6 tables (run once)
+├── .env ← Your API key (never commit this)
+├── .env.example ← Template — safe to commit
+├── requirements.txt ← Python dependencies
+└── README.md ← This file
+
+
+---
+
+## Database Schema (6 Tables)
+
+departments → id, name, budget
+employees → id, name, department_id, salary, hire_date
+sales → id, employee_id, amount, sale_date
+products → id, name, category, price, stock_qty
+orders → id, employee_id, product_id, quantity, order_date, status
+attendance → id, employee_id, date, status
+
+
+**Relationships:**
+- `employees.department_id` → `departments.id`
+- `sales.employee_id` → `employees.id`
+- `orders.employee_id` → `employees.id`
+- `orders.product_id` → `products.id`
+- `attendance.employee_id` → `employees.id`
+
+---
+
+## API Endpoints (9 Total)
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/` | Health check |
+| GET | `/schema` | View full database schema |
+| POST | `/query` | Convert NL question to SQL and execute |
+| POST | `/query/limited` | Same as /query with rate limiting (5/day per IP) |
+| POST | `/export` | Run query and download results as CSV |
+| POST | `/explain` | Explain any SQL query in plain English |
+| GET | `/analytics` | Usage stats — total queries, top keywords, active hours |
+| GET | `/history` | Last N queries made to the API |
+| DELETE | `/history` | Clear all query history |
 
 ---
 
 ## Setup Instructions
 
-### 1. Clone / download the project
+### 1. Clone the repository
 
 ```bash
+git clone https://github.com/Praveen-bhadakambi/text-to-sql-agent.git
 cd text-to-sql-agent
 ```
 
@@ -47,8 +94,7 @@ cd text-to-sql-agent
 ```bash
 python -m venv venv
 
-# Activate it:
-# macOS / Linux:
+# Mac / Linux:
 source venv/bin/activate
 
 # Windows:
@@ -61,111 +107,104 @@ venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 4. Add your Gemini API key
+### 4. Get your free Groq API key
+
+- Visit: https://console.groq.com
+- Sign up free (no credit card)
+- Create API key → copy it
+
+### 5. Add your API key
 
 ```bash
 cp .env.example .env
 ```
 
-Open `.env` and replace `your_gemini_api_key_here` with your real key.
-Get a free key at: https://aistudio.google.com/app/apikey
+Open `.env` and replace the placeholder:
 
-### 5. Seed the database (run once)
+GROQ_API_KEY=gsk_your_real_key_here
+
+
+### 6. Seed the database (run once)
 
 ```bash
 python sample_data.py
 ```
 
-This creates `company.db` with 3 tables and sample data:
-- `departments` — 4 rows
-- `employees` — 8 rows
-- `sales` — 10 rows
+Output:
 
-### 6. Start the server
+✅ company.db seeded successfully.
+├── departments → 4 rows
+├── employees → 8 rows
+├── sales → 10 rows
+├── products → 5 rows
+├── orders → 6 rows
+└── attendance → 8 rows
+
+
+### 7. Start the server
 
 ```bash
 uvicorn main:app --reload
 ```
 
-Server runs at: http://localhost:8000
-API Explorer at: http://localhost:8000/docs
-
----
-
-## API Endpoints
-
-### `GET /` — Health check
-```json
-{ "status": "running" }
-```
-
-### `GET /schema` — View database schema
-Returns all table names and column definitions.
-
-### `POST /query` — Main endpoint
-**Request body:**
-```json
-{ "question": "Who are the top 3 highest paid employees?" }
-```
-
-**Response:**
-```json
-{
-  "question": "Who are the top 3 highest paid employees?",
-  "generated_sql": "SELECT name, salary FROM employees ORDER BY salary DESC LIMIT 3",
-  "results": [
-    { "name": "Sneha Iyer", "salary": 98000 },
-    { "name": "Rahul Nair", "salary": 92000 },
-    { "name": "Priya Sharma", "salary": 85000 }
-  ],
-  "row_count": 3,
-  "executed_at": "2024-07-11 10:30:00 UTC"
-}
-```
-
-### `GET /history?limit=10` — Query history
-Returns last N queries made to the API.
-
-### `DELETE /history` — Clear history
+Visit: http://localhost:8000/docs
 
 ---
 
 ## Sample Questions to Try
 
-```
 Who are the top 3 highest paid employees?
 How many employees are in each department?
 What is the total sales amount per employee?
 Which department has the highest budget?
-List all employees hired after 2022?
-Who made the most sales in January 2024?
+Which product has the highest stock quantity?
+How many orders were delivered in 2024?
+Which employee placed the most orders?
+List all employees who were absent on 2024-07-01.
 What is the average salary in the Engineering department?
-```
+Which category has the most products?
+
 
 ---
 
-## Resume Bullet Point
+## How It Works
 
-> Developed a Text-to-SQL REST API (FastAPI, Google Gemini API, SQLite) that converts natural language questions to validated SQL queries; implemented schema introspection, injection-safe validator blocking 8 dangerous SQL operations, query history logging, and deployed to Railway.
-
----
-
-## How It Works (Flow)
-
-```
-User question (plain English)
-        ↓
-FastAPI POST /query
-        ↓
-Schema Inspector reads DB structure
-        ↓
-Gemini LLM receives: question + schema → returns SQL
-        ↓
-SQL Validator checks: SELECT only, no DROP/DELETE/etc.
-        ↓
-SQLite executes the query
-        ↓
+User types plain English question
+↓
+POST /query (FastAPI)
+↓
+Schema Inspector reads all 6 tables dynamically
+↓
+Groq LLaMA 3 receives: question + schema → returns SQL
+↓
+SQL Validator: blocks DROP / DELETE / UPDATE / INSERT etc.
+↓
+SQLite executes the safe SELECT query
+↓
 Results saved to query_history table
-        ↓
+↓
 JSON response returned to user
-```
+
+
+---
+
+## Security Features
+
+- SQL injection prevention — blocks 8 destructive operations
+- Rate limiting — 5 queries per IP per day (HTTP 429 on exceed)
+- Read-only enforcement — only SELECT queries allowed
+- Comment stripping — removes SQL comments before validation
+
+---
+
+## Resume Bullet Points
+
+> Engineered an AI-powered Text-to-SQL REST API (FastAPI, Groq LLaMA 3, SQLite, Python) with 9 endpoints converting natural language to validated SQL; implemented schema introspection across 6 relational tables, CSV export, SQL explanation, rate limiting (5 req/day), and usage analytics dashboard.
+
+---
+
+## Author
+
+**Praveen Bhadakambi**
+- GitHub: [@Praveen-bhadakambi](https://github.com/Praveen-bhadakambi)
+- LinkedIn: [linkedin.com/in/praveen-bhadakambi](https://linkedin.com/in/praveen-bhadakambi)

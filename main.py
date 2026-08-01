@@ -14,6 +14,8 @@ API Docs (auto-generated):
 
 import sqlite3
 from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from datetime import datetime
@@ -33,6 +35,11 @@ app = FastAPI(
     ),
     version="1.0.0",
 )
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.get("/home", include_in_schema=False)
+def landing_page():
+    return FileResponse("static/index.html")
 
 # Allow all origins for local development (restrict this in production)
 app.add_middleware(
@@ -226,3 +233,145 @@ def clear_history():
     conn.commit()
     conn.close()
     return {"message": "Query history cleared."}
+
+# ── Feature 2: Query Explanation Endpoint ─────────────────────────────────────
+
+class ExplainRequest(BaseModel):
+    sql: str
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "sql": "SELECT name, salary FROM employees ORDER BY salary DESC LIMIT 3"
+            }
+        }
+
+
+class ExplainResponse(BaseModel):
+    sql: str
+    explanation: str
+    breakdown: dict
+
+
+@app.post("/explain", response_model=ExplainResponse, tags=["Core"])
+def explain_sql(request: ExplainRequest):
+    """
+    Takes any SQL query and returns:
+    - Plain English explanation of what the query does
+    - Breakdown of each SQL clause used
+    
+    Useful for non-technical users who receive SQL but cannot read it.
+    """
+
+    # ── Step 0: validate input ────────────────────────────────────────────────
+    if not request.sql.strip():
+        raise HTTPException(status_code=400, detail="SQL query cannot be empty.")
+
+    if len(request.sql) > 2000:
+        raise HTTPException(status_code=400, detail="SQL query too long (max 2000 characters).")
+
+    # ── Step 1: build explanation prompt ──────────────────────────────────────
+    explanation_prompt = f"""You are a SQL teacher explaining to a non-technical person.
+
+Explain this SQL query in simple plain English:
+
+SQL QUERY:
+{request.sql}
+
+RULES:
+1. Write exactly 2-3 sentences.
+2. No technical jargon. Use simple everyday words.
+3. Start with "This query..."
+4. Describe WHAT it does, not HOW SQL works internally.
+5. Mention the table names and what data is being fetched.
+
+EXPLANATION:"""
+
+    # ── Step 2: build breakdown prompt ───────────────────────────────────────
+    breakdown_prompt = f"""Analyze this SQL query and return a JSON object only.
+
+SQL QUERY:
+{request.sql}
+
+Return ONLY a valid JSON object with these exact keys:
+{{
+  "tables_used": ["list of table names used"],
+  "operation": "what type of operation (SELECT, JOIN, GROUP BY etc)",
+  "filters": "what conditions or filters are applied (or 'None')",
+  "sorting": "how results are sorted (or 'None')",
+  "limit": "how many results are returned (or 'All')"
+}}
+
+Return ONLY the JSON. No explanation. No markdown. No backticks."""
+
+    import requests as req
+    import os
+    from dotenv import load_dotenv
+    load_dotenv()
+
+    api_key = os.getenv("GROQ_API_KEY", "").strip()
+
+    if not api_key:
+        raise HTTPException(
+            status_code=503,
+            detail="GROQ_API_KEY not found in .env file."
+        )
+
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+
+    # ── Step 3: call Groq for plain English explanation ───────────────────────
+    try:
+        exp_response = req.post(
+            url="https://api.groq.com/openai/v1/chat/completions",
+            headers=headers,
+            json={
+                "model": "llama-3.1-8b-instant",
+                "messages": [{"role": "user", "content": explanation_prompt}],
+                "temperature": 0.3,
+                "max_tokens": 200
+            },
+            timeout=30
+        )
+        explanation = exp_response.json()["choices"][0]["message"]["content"].strip()
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"LLM explanation error: {str(e)}")
+
+    # ── Step 4: call Groq for structured breakdown ────────────────────────────
+    try:
+        breakdown_response = req.post(
+            url="https://api.groq.com/openai/v1/chat/completions",
+            headers=headers,
+            json={
+                "model": "llama-3.1-8b-instant",
+                "messages": [{"role": "user", "content": breakdown_prompt}],
+                "temperature": 0.1,
+                "max_tokens": 300
+            },
+            timeout=30
+        )
+        breakdown_raw = breakdown_response.json()["choices"][0]["message"]["content"].strip()
+
+        # Clean any accidental markdown fences
+        breakdown_raw = breakdown_raw.replace("```json", "").replace("```", "").strip()
+
+        import json
+        breakdown = json.loads(breakdown_raw)
+
+    except Exception:
+        # If JSON parsing fails, return a safe default
+        breakdown = {
+            "tables_used": [],
+            "operation": "Could not parse",
+            "filters": "Could not parse",
+            "sorting": "Could not parse",
+            "limit": "Could not parse"
+        }
+
+    return ExplainResponse(
+        sql=request.sql,
+        explanation=explanation,
+        breakdown=breakdown
+    )

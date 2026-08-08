@@ -45,8 +45,7 @@
   .t-red{background:#FF5F57} .t-amber{background:#FEBC2E} .t-green{background:#28C840}
   .terminal-title { margin-left:8px; font-family:var(--mono); font-size:12px; color:#888; }
   .terminal-body { background:#0D1117; padding:24px 28px; font-family:var(--mono); font-size:13px; line-height:1.8; }
-  .tc { color:#6E7681 } .tk { color:#79C0FF } .ts { color:#A5D6FF }
-  .tv { color:#56D364 } .tw { color:#E6EDF3 } .tl { color:#E3B341 }
+  .tc{color:#6E7681} .tk{color:#79C0FF} .ts{color:#A5D6FF} .tv{color:#56D364} .tw{color:#E6EDF3}
   .terminal-divider { border:none; border-top:1px solid #21262D; margin:16px 0; }
   .stats-section { background:var(--gray-1); border-top:1px solid var(--gray-2); border-bottom:1px solid var(--gray-2); padding:40px; }
   .stats-grid { max-width:900px; margin:0 auto; display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:32px; text-align:center; }
@@ -113,12 +112,14 @@
 </style>
 </head>
 <body>
+
+<!-- NAV -->
 <nav>
   <a href="#" class="nav-logo"><div class="nav-logo-dot"></div>Text-to-SQL Agent</a>
   <ul class="nav-links">
+    <li><a href="#demo">Live Demo</a></li>
     <li><a href="#how-it-works">How it works</a></li>
     <li><a href="#endpoints">Endpoints</a></li>
-    <li><a href="#database">Database</a></li>
     <li><a href="#stack">Tech stack</a></li>
   </ul>
   <div class="nav-cta">
@@ -127,12 +128,13 @@
   </div>
 </nav>
 
+<!-- HERO -->
 <section class="hero">
   <div class="hero-badge"><div class="hero-badge-dot"></div>Live — powered by Groq LLaMA 3</div>
   <h1>Ask questions.<br><span>Get SQL instantly.</span></h1>
   <p class="hero-sub">Type a plain English question. The AI generates the SQL, validates it for safety, runs it on the database, and returns results in milliseconds.</p>
   <div class="hero-btns">
-    <a href="/docs" target="_blank" class="btn btn-primary-large">Try the API →</a>
+    <a href="#demo" class="btn btn-primary-large">Try Live Demo →</a>
     <a href="https://github.com/Praveen-bhadakambi/text-to-sql-agent" target="_blank" class="btn btn-outline btn-outline-large">View on GitHub</a>
   </div>
   <div class="terminal-wrap">
@@ -145,8 +147,7 @@
       <div><span class="tk">"question"</span><span class="tw">: </span><span class="ts">"Who are the top 3 highest paid employees?"</span></div>
       <hr class="terminal-divider">
       <div><span class="tc">// Response — 843ms</span></div>
-      <div><span class="tk">"generated_sql"</span><span class="tw">: </span><span class="ts">"SELECT name, salary FROM employees ORDER BY salary DESC LIMIT 3"</span></div>
-      <br>
+      <div><span class="tk">"generated_sql"</span><span class="tw">: </span><span class="ts">"SELECT name, salary FROM employees ORDER BY salary DESC LIMIT 3"</span></div><br>
       <div><span class="tk">"results"</span><span class="tw">: [</span></div>
       <div>&nbsp;&nbsp;<span class="tw">{ </span><span class="tk">"name"</span><span class="tw">: </span><span class="tv">"Sneha Iyer"</span><span class="tw">, </span><span class="tk">"salary"</span><span class="tw">: </span><span class="tv">98000</span><span class="tw"> },</span></div>
       <div>&nbsp;&nbsp;<span class="tw">{ </span><span class="tk">"name"</span><span class="tw">: </span><span class="tv">"Rahul Nair"</span><span class="tw">, </span><span class="tk">"salary"</span><span class="tw">: </span><span class="tv">92000</span><span class="tw"> },</span></div>
@@ -157,6 +158,7 @@
   </div>
 </section>
 
+<!-- STATS -->
 <div class="stats-section">
   <div class="stats-grid">
     <div><div class="stat-number">9</div><div class="stat-label">API endpoints</div></div>
@@ -167,6 +169,145 @@
   </div>
 </div>
 
+<!-- LIVE DEMO SECTION -->
+<section class="section" id="demo">
+  <div class="section-eyebrow">Live Demo</div>
+  <h2 class="section-title">Try it yourself — right now</h2>
+  <p class="section-sub">Type any question below. The AI generates SQL, runs it on the real database, and shows results instantly.</p>
+
+  <div style="border:1px solid var(--gray-2);border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.06)">
+
+    <!-- Input -->
+    <div style="padding:24px;background:var(--white);border-bottom:1px solid var(--gray-2)">
+      <div style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--gray-3);margin-bottom:10px">Your question</div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <input id="demo-input" type="text"
+          placeholder="Who are the top 3 highest paid employees?"
+          style="flex:1;padding:12px 16px;border:1px solid var(--gray-2);border-radius:8px;font-size:14px;font-family:var(--sans);outline:none;color:var(--black);transition:border-color 0.15s"
+          onfocus="this.style.borderColor='var(--accent)'"
+          onblur="this.style.borderColor='var(--gray-2)'"
+          onkeydown="if(event.key==='Enter') runDemo()"
+        />
+        <button onclick="runDemo()"
+          style="padding:12px 20px;background:var(--accent);color:var(--white);border:none;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;font-family:var(--sans);white-space:nowrap;transition:background 0.15s"
+          onmouseover="this.style.background='var(--accent-dark)'"
+          onmouseout="this.style.background='var(--accent)'">
+          Generate SQL →
+        </button>
+      </div>
+      <!-- Quick chips -->
+      <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px">
+        <span style="font-size:11px;color:var(--gray-3);align-self:center">Try:</span>
+        <button onclick="setQuestion('How many employees are in each department?')" style="font-size:12px;padding:4px 10px;border:1px solid var(--gray-2);border-radius:999px;background:var(--gray-1);color:var(--gray-4);cursor:pointer;font-family:var(--sans)">Employees per dept</button>
+        <button onclick="setQuestion('Which product has the highest stock quantity?')" style="font-size:12px;padding:4px 10px;border:1px solid var(--gray-2);border-radius:999px;background:var(--gray-1);color:var(--gray-4);cursor:pointer;font-family:var(--sans)">Highest stock</button>
+        <button onclick="setQuestion('What is the total sales amount per employee?')" style="font-size:12px;padding:4px 10px;border:1px solid var(--gray-2);border-radius:999px;background:var(--gray-1);color:var(--gray-4);cursor:pointer;font-family:var(--sans)">Sales per employee</button>
+        <button onclick="setQuestion('List all employees hired after 2022')" style="font-size:12px;padding:4px 10px;border:1px solid var(--gray-2);border-radius:999px;background:var(--gray-1);color:var(--gray-4);cursor:pointer;font-family:var(--sans)">Hired after 2022</button>
+        <button onclick="setQuestion('Which department has the highest budget?')" style="font-size:12px;padding:4px 10px;border:1px solid var(--gray-2);border-radius:999px;background:var(--gray-1);color:var(--gray-4);cursor:pointer;font-family:var(--sans)">Highest budget dept</button>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div id="demo-loading" style="display:none;padding:32px;text-align:center;background:#0D1117">
+      <div style="font-family:var(--mono);font-size:13px;color:#888">Generating SQL<span id="dots">...</span></div>
+    </div>
+
+    <!-- Output -->
+    <div id="demo-output" style="display:none;background:#0D1117">
+      <div style="padding:12px 20px;border-bottom:1px solid #21262D;display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="width:8px;height:8px;border-radius:50%;background:#28C840"></div>
+          <span style="font-family:var(--mono);font-size:12px;color:#888">Generated SQL</span>
+        </div>
+        <span id="demo-time" style="font-family:var(--mono);font-size:11px;color:#555"></span>
+      </div>
+      <div style="padding:16px 20px;font-family:var(--mono);font-size:13px;color:#79C0FF" id="demo-sql"></div>
+      <div style="padding:0 20px 16px;border-top:1px solid #21262D;margin-top:4px">
+        <div style="padding:12px 0;font-family:var(--mono);font-size:12px;color:#888">Results</div>
+        <div id="demo-results" style="font-size:13px;color:#E6EDF3;font-family:var(--mono);line-height:1.8"></div>
+        <div id="demo-count" style="margin-top:8px;font-size:11px;color:#555;font-family:var(--mono)"></div>
+      </div>
+    </div>
+
+    <!-- Error -->
+    <div id="demo-error" style="display:none;padding:20px 24px;background:#161B22">
+      <div style="font-size:13px;color:#F78166;font-family:var(--mono)" id="demo-error-msg"></div>
+    </div>
+
+  </div>
+</section>
+
+<script>
+  function setQuestion(q) {
+    document.getElementById('demo-input').value = q;
+    document.getElementById('demo-input').focus();
+  }
+
+  async function runDemo() {
+    const question = document.getElementById('demo-input').value.trim();
+    if (!question) return;
+
+    document.getElementById('demo-output').style.display = 'none';
+    document.getElementById('demo-error').style.display = 'none';
+    document.getElementById('demo-loading').style.display = 'block';
+
+    let dotCount = 0;
+    const dotInterval = setInterval(() => {
+      dotCount = (dotCount + 1) % 4;
+      document.getElementById('dots').textContent = '.'.repeat(dotCount + 1);
+    }, 400);
+
+    const start = Date.now();
+
+    try {
+      const response = await fetch('/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question })
+      });
+
+      clearInterval(dotInterval);
+      const elapsed = Date.now() - start;
+      document.getElementById('demo-loading').style.display = 'none';
+
+      if (!response.ok) {
+        const err = await response.json();
+        document.getElementById('demo-error-msg').textContent = '❌ ' + (err.detail || 'Something went wrong');
+        document.getElementById('demo-error').style.display = 'block';
+        return;
+      }
+
+      const data = await response.json();
+      document.getElementById('demo-sql').textContent = data.generated_sql;
+      document.getElementById('demo-time').textContent = elapsed + 'ms';
+
+      const resultsDiv = document.getElementById('demo-results');
+      if (data.results && data.results.length > 0) {
+        resultsDiv.innerHTML = data.results.map(row => {
+          const entries = Object.entries(row).map(([k, v]) =>
+            `<span style="color:#79C0FF">${k}</span><span style="color:#555">: </span><span style="color:#56D364">${v}</span>`
+          ).join('<span style="color:#555"> · </span>');
+          return `<div style="padding:3px 0">${entries}</div>`;
+        }).join('');
+      } else {
+        resultsDiv.innerHTML = '<span style="color:#555">No results found.</span>';
+      }
+
+      document.getElementById('demo-count').textContent =
+        `${data.row_count} row${data.row_count !== 1 ? 's' : ''} returned`;
+      document.getElementById('demo-output').style.display = 'block';
+
+    } catch (e) {
+      clearInterval(dotInterval);
+      document.getElementById('demo-loading').style.display = 'none';
+      document.getElementById('demo-error-msg').textContent = '❌ Cannot connect to API. Make sure the server is running.';
+      document.getElementById('demo-error').style.display = 'block';
+    }
+  }
+</script>
+
+<hr class="section-divider">
+
+<!-- HOW IT WORKS -->
 <section class="section" id="how-it-works">
   <div class="section-eyebrow">How it works</div>
   <h2 class="section-title">From question to result in 5 steps</h2>
@@ -174,7 +315,7 @@
   <div class="flow-steps">
     <div class="flow-step">
       <div class="flow-step-left"><div class="flow-num">1</div><div class="flow-line"></div></div>
-      <div class="flow-content"><div class="flow-title">User sends a plain English question</div><div class="flow-desc">No SQL knowledge needed. The user types a question like "Which department has the highest budget?" via the REST API.</div><div class="flow-tag">POST /query</div></div>
+      <div class="flow-content"><div class="flow-title">User sends a plain English question</div><div class="flow-desc">No SQL knowledge needed. Type a question like "Which department has the highest budget?" via the REST API or the live demo above.</div><div class="flow-tag">POST /query</div></div>
     </div>
     <div class="flow-step">
       <div class="flow-step-left"><div class="flow-num">2</div><div class="flow-line"></div></div>
@@ -197,6 +338,7 @@
 
 <hr class="section-divider">
 
+<!-- ENDPOINTS -->
 <section class="section" id="endpoints">
   <div class="section-eyebrow">API Reference</div>
   <h2 class="section-title">9 endpoints, fully documented</h2>
@@ -216,6 +358,7 @@
 
 <hr class="section-divider">
 
+<!-- DATABASE -->
 <section class="section" id="database">
   <div class="section-eyebrow">Database</div>
   <h2 class="section-title">6 relational tables</h2>
@@ -232,6 +375,7 @@
 
 <hr class="section-divider">
 
+<!-- TECH STACK -->
 <section class="section" id="stack">
   <div class="section-eyebrow">Tech stack</div>
   <h2 class="section-title">Built with production tools</h2>
@@ -248,6 +392,7 @@
 
 <hr class="section-divider">
 
+<!-- SECURITY -->
 <section class="section">
   <div class="section-eyebrow">Security</div>
   <h2 class="section-title">Built with safety first</h2>
@@ -260,22 +405,25 @@
   </div>
 </section>
 
+<!-- CTA -->
 <div class="cta-section">
   <h2>Try it right now</h2>
   <p>The API is running locally. Open the interactive docs and ask your first question.</p>
   <div class="cta-btns">
-    <a href="/docs" target="_blank" class="btn btn-white">Open API Explorer →</a>
+    <a href="/docs" target="_blank" class="btn btn-white">Try Live API →</a>
     <a href="https://github.com/Praveen-bhadakambi/text-to-sql-agent" target="_blank" class="btn btn-ghost">View source on GitHub</a>
   </div>
 </div>
 
+<!-- FOOTER -->
 <footer>
-  <div class="footer-left">Built by <strong>Praveen Bhadakambi</strong> · B.E. CSE, Atria Institute of Technology</div>
+  <div class="footer-left">Built by <strong>Praveen Bhadakambi</strong></div>
   <div class="footer-links">
     <a href="https://github.com/Praveen-bhadakambi" target="_blank">GitHub</a>
     <a href="https://linkedin.com/in/praveen-bhadakambi" target="_blank">LinkedIn</a>
     <a href="/docs" target="_blank">API Docs</a>
   </div>
 </footer>
+
 </body>
 </html>

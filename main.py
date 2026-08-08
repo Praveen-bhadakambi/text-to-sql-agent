@@ -13,6 +13,10 @@ API Docs (auto-generated):
 """
 
 import sqlite3
+import os
+if not os.path.exists("company.db"):
+    from sample_data import seed
+    seed()
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -30,7 +34,7 @@ from llm_service import generate_sql
 app = FastAPI(
     title="Text-to-SQL Query Agent",
     description=(
-        "Convert plain English questions into SQL queries using Gemini AI. "
+        "Convert plain English questions into SQL queries using Groq LLaMA 3."
         "Supports schema introspection, safety validation, and query history."
     ),
     version="1.0.0",

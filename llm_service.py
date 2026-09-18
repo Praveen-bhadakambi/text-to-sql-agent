@@ -74,7 +74,7 @@ def generate_sql(natural_language: str, schema: str) -> str:
     }
 
     payload = {
-        "model": "llama-3.1-8b-instant",   # free model, very fast
+        "model": "qwen/qwen3.8-27b",   # free model, very fast
         "messages": [
             {"role": "user", "content": prompt}
         ],
